@@ -143,9 +143,21 @@ class HomeView extends StatelessWidget {
     return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          child: Text('Quotes', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Text('Featured Quotes', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+
+            ),
+            Spacer(),
+            Text('See All', style: TextStyle(color: Colors.white, fontSize: 14.sp)),
+            SizedBox(width: 4.w),
+            Image.asset('assets/arrow.png', width: 18.w, height: 18.h),
+            SizedBox(width: 20.w),
+          ],
         ),
         SizedBox(
           height: 140.h, // updated height to match others
