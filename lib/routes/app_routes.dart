@@ -1,3 +1,4 @@
+import 'package:cardinal/auth/signup_view.dart';
 import 'package:cardinal/journal/journal_view.dart';
 import 'package:cardinal/note_writing/note_writing_view.dart';
 import 'package:cardinal/quote/quote_view.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String save = '/save';
   static const String journal = '/journal';
   static const String noteWriting = '/note-writing';
+  static const String signup = '/signup';
 
   static Map<String, WidgetBuilder> get routes => {
     home: (_) => HomeView(),
@@ -42,5 +44,7 @@ class AppRoutes {
     save: (_) => SaveView(),
     journal: (_) => JournalView(),
     noteWriting: (_) => NoteWritingView(),
+    signup: (_) => SignupView(),
+
   };
 }
