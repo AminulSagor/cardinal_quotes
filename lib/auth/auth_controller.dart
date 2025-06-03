@@ -14,6 +14,9 @@ class AuthController extends GetxController {
   final isLogin = true.obs;
   final isLoading = false.obs;
 
+
+
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
@@ -62,7 +65,7 @@ class AuthController extends GetxController {
       final token = response['token'];
       await TokenStorage.saveToken(token);
       await TokenStorage.saveCredentials(email.value, password.value);
-      Get.snackbar("Success", response['message']);
+
       // Optional: navigation
       Get.offAll(() => HomeView());
     } else {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../note_writing/note_writing_view.dart';
 import 'journal_controller.dart';
 
 class JournalView extends StatelessWidget {
@@ -32,35 +33,78 @@ class JournalView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Container(
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7EA),
-                          borderRadius: BorderRadius.circular(10.r),
+                      GestureDetector(
+                        onTap: controller.toggleSearch,
+                        child: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7EA),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Icon(Icons.search, color: Colors.brown, size: 20.sp),
                         ),
-                        child: Icon(Icons.search, color: Colors.brown, size: 20.sp),
                       ),
                     ],
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 12.h),
+                  Obx(() => controller.isSearchVisible.value
+                      ? Column(
+                    children: [
+                      TextField(
+                        onChanged: controller.search,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFFFF7EA),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          hintText: "Search notes...",
+                          hintStyle: TextStyle(color: Colors.brown.withOpacity(0.6)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon: Icon(Icons.search, color: Colors.brown),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.close, color: Colors.brown),
+                            onPressed: controller.toggleSearch,
+                          ),
+                        ),
+                        style: TextStyle(color: Colors.brown),
+                      ),
+                      SizedBox(height: 12.h),
+                    ],
+                  )
+                      : SizedBox.shrink()),
                   Expanded(
                     child: Obx(() {
-                      final journals = controller.journals;
+                      if (controller.isLoading.value) {
+                        return Center(child: CircularProgressIndicator(color: Colors.white));
+                      }
+
+                      final journals = controller.filteredJournals;
                       return ListView.builder(
                         padding: EdgeInsets.only(bottom: 160.h),
                         itemCount: journals.length,
                         itemBuilder: (context, index) {
                           final journal = journals[index];
+                          final color = journal['color'] as int;
+                          final isDark = color == 0xFF000000;
 
-                          // Full width for index 2
-                          if (index == 2) {
-                            return Padding(
+                          return GestureDetector(
+                            onTap: () async {
+                              await Get.to(() => NoteWritingView(), arguments: {
+                                "id": journal["id"],
+                                "title": journal["title"],
+                                "note": journal["text"],
+                              });
+                              controller.loadJournals();
+                            },
+                            child: Padding(
                               padding: EdgeInsets.only(bottom: 12.h),
                               child: Container(
                                 width: double.infinity,
                                 padding: EdgeInsets.all(12.w),
                                 decoration: BoxDecoration(
-                                  color: Color(journal['color'] as int),
+                                  color: Color(color),
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
                                 child: Column(
@@ -69,42 +113,31 @@ class JournalView extends StatelessWidget {
                                     Center(
                                       child: Text(
                                         journal["title"] as String,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.brown,
+                                          color: isDark ? Colors.white : Colors.brown,
                                         ),
                                       ),
                                     ),
                                     SizedBox(height: 8.h),
-
-                                       Text(
-                                        journal["text"] as String,
-                                         textAlign: TextAlign.center,
-
-                                         style: TextStyle(fontSize: 12.sp),
+                                    Text(
+                                      journal["text"] as String,
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: isDark ? Colors.white : Colors.black,
                                       ),
-
-                                    SizedBox(height: 6.h),
-                                    Center(child: const Text("..........")),
+                                    ),
                                   ],
                                 ),
                               ),
-                            );
-                          }
-
-                          // Other items in 2-column grid style
-                          return Row(
-                            children: [
-                              if (index % 2 == 0 && index != 2) ...[
-                                _buildGridCard(journals[index]),
-                                SizedBox(width: 12.w),
-                                if (index + 1 < journals.length && index + 1 != 2)
-                                  _buildGridCard(journals[index + 1])
-                                else
-                                  Expanded(child: SizedBox()), // filler if odd count
-                              ],
-                            ],
+                            ),
                           );
                         },
                       );
@@ -113,22 +146,18 @@ class JournalView extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Bird Image
             Positioned(
               bottom: 0,
               left: 0,
               child: Image.asset('assets/two_bird.png', height: 180.h),
             ),
-
-            // Floating add button
-            // Floating add button
             Positioned(
               bottom: 40.h,
               right: 40.w,
               child: GestureDetector(
-                onTap: () {
-                  // Handle button tap here
+                onTap: () async {
+                  await Get.to(() => NoteWritingView());
+                  controller.loadJournals();
                 },
                 child: Container(
                   width: 56.w,
@@ -154,46 +183,6 @@ class JournalView extends StatelessWidget {
                 ),
               ),
             ),
-
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridCard(Map<String, dynamic> journal) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: Color(journal['color'] as int),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                journal["title"] as String,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown,
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              journal["text"] as String,
-              textAlign: TextAlign.center,
-
-              style: TextStyle(fontSize: 12.sp),
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: 6.h),
-            Center(child: const Text("..........")),
           ],
         ),
       ),

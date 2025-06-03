@@ -19,6 +19,13 @@ class _NoteWritingViewState extends State<NoteWritingView> {
     super.initState();
     titleController = TextEditingController(text: controller.title.value);
     noteController = TextEditingController(text: controller.note.value);
+
+    titleController.addListener(() {
+      controller.title.value = titleController.text;
+    });
+    noteController.addListener(() {
+      controller.note.value = noteController.text;
+    });
   }
 
   @override
@@ -30,165 +37,115 @@ class _NoteWritingViewState extends State<NoteWritingView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFAA4A2E),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Background birds
-            Align(
-              alignment: Alignment.center,
-              child: Opacity(
-                opacity: 1,
-                child: Image.asset('assets/background_bird.png', height: 400.h),
+    return WillPopScope(
+      onWillPop: () async {
+        if (FocusScope.of(context).hasFocus) {
+          FocusScope.of(context).unfocus();
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+
+        controller.saveOrUpdateNote();
+        await Future.delayed(const Duration(milliseconds: 200));
+        Future.microtask(() => Get.back()); // Navigate immediately
+
+        return false;
+      },
+
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Image.asset(
+                  'assets/note_writing_back.png',
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                ),
               ),
-            ),
 
-            // Main Content
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Icon(Icons.arrow_right_alt, color: Colors.white),
-                      Container(
-                        padding: EdgeInsets.all(6.w),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7EA),
-                          borderRadius: BorderRadius.circular(10.r),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Get.back(),
+                          child: Icon(Icons.arrow_right_alt, color: Colors.brown),
                         ),
-                        child: Icon(Icons.menu, color: Colors.brown, size: 20.sp),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32.h),
 
-                  // Editable Title (conditionally visible)
-                  Obx(() => controller.isTitleVisible.value
-                      ? GestureDetector(
-                    onTap: () => controller.isTitleVisible.value = false,
-                    child: TextField(
+                        Container(
+                          padding: EdgeInsets.all(6.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7EA),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Icon(Icons.menu, color: Colors.brown, size: 20.sp),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+
+                    // Title input
+                    Obx(() => controller.isTitleVisible.value
+                        ? TextField(
                       controller: titleController,
-                      onChanged: (value) => controller.title.value = value,
                       style: TextStyle(
-                        fontSize: 20.sp,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.brown,
                       ),
                       decoration: InputDecoration(
                         hintText: "Title",
                         hintStyle: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white70,
+                          color: Colors.brown.withOpacity(0.4),
                         ),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
-                    ),
-                  )
-                      : SizedBox.shrink()),
-                  SizedBox(height: 8.h),
+                    )
+                        : SizedBox.shrink()),
+                    SizedBox(height: 20.h),
 
-                  // Editable Note (conditionally visible)
-                  Obx(() => controller.isNoteVisible.value
-                      ? Expanded(
-                    child: GestureDetector(
-                      onTap: () => controller.isNoteVisible.value = false,
+                    // Note input
+                    Obx(() => controller.isNoteVisible.value
+                        ? Expanded(
                       child: TextField(
                         controller: noteController,
-                        onChanged: (value) => controller.note.value = value,
                         maxLines: null,
                         expands: true,
                         keyboardType: TextInputType.multiline,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.brown,
                           fontSize: 14.sp,
                           height: 1.5,
                         ),
                         decoration: InputDecoration(
-                          hintText: "Write your note...",
-                          hintStyle: TextStyle(color: Colors.white70, fontSize: 14.sp),
+                          hintText: "Note",
+                          hintStyle: TextStyle(
+                            color: Colors.brown.withOpacity(0.4),
+                            fontSize: 14.sp,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                    ),
-                  )
-                      : Expanded(child: SizedBox.shrink())),
-                ],
+                    )
+                        : Expanded(child: SizedBox.shrink())),
+                  ],
+                ),
               ),
-            ),
-
-            // Bottom Control Panel
-            Positioned(
-              bottom: -40,
-              left: 0,
-              right: 0,
-              child: Stack(
-                children: [
-                  Container(
-                    margin: EdgeInsets.all(16.w),
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7EA),
-                      borderRadius: BorderRadius.circular(40.r),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Action Icons
-                        Row(
-                          children: [
-                            SizedBox(width: 40.w),
-                            Icon(Icons.camera_alt_outlined, color: Colors.brown),
-                            SizedBox(width: 40.w),
-                            Icon(Icons.edit, color: Colors.brown),
-                            SizedBox(width: 40.w),
-                            Icon(Icons.link, color: Colors.brown),
-                            SizedBox(width: 40.w),
-                            Icon(Icons.list, color: Colors.brown),
-                          ],
-                        ),
-                        // Edited Time Info
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Obx(() => Text(
-                              controller.editedDate.value,
-                              style: TextStyle(color: Colors.brown, fontSize: 12.sp),
-                            )),
-                            SizedBox(width: 16.w),
-                            Obx(() => Text(
-                              controller.editedTime.value,
-                              style: TextStyle(color: Colors.brown, fontSize: 12.sp),
-                            )),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Decorative Bird Overlay
-                  Transform.translate(
-                    offset: Offset(20.w, -100.h), // Adjust X and Y values as needed
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Image.asset('assets/birds_with_tree.png', height: 160.h),
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

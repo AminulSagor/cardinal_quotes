@@ -29,7 +29,7 @@ class HomeView extends StatelessWidget {
   ];
 
   final List<Map<String, dynamic>> topMenu = [
-    {'icon': Icons.menu, 'label': ''},
+    {'icon': Icons.menu, 'label': 'drawer'},
     {'icon': Icons.local_fire_department, 'label': 'Popular'},
     {'icon': Icons.new_releases, 'label': 'Latest'},
     {'icon': Icons.sentiment_very_dissatisfied, 'label': 'Grief & Loss'},
@@ -89,15 +89,18 @@ class HomeView extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: topMenu.map((e) {
-            if (e['label'] == '') {
+            if (e['label'] == 'drawer') {
               return Padding(
                 padding: EdgeInsets.only(right: 12.w),
-                child: IconButton(
-                  icon: Icon(e['icon'], color: Colors.white, size: 24.sp),
-                  onPressed: () {},
+                child: Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(e['icon'], color: Colors.white, size: 24.sp),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
                 ),
               );
             }
+
             return Padding(
               padding: EdgeInsets.only(right: 12.w),
               child: Container(
@@ -347,6 +350,99 @@ class HomeView extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: const BottomNavBar(),
+      drawer: Container(
+        width: 230.w,
+        margin: EdgeInsets.only(
+          top: 40.h,
+          bottom: 20.h,
+          left: 12.w,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.r),
+          child: Drawer(
+            backgroundColor: const Color(0xFFFEF0D6), // ✅ Updated background color
+            child: ListView(
+              padding: EdgeInsets.symmetric(horizontal: 1.w),
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  color: const Color(0xFFFEF0D6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 30.h,),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          '"Peace comes from within.\nDo not seek it without."',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.brown, fontSize: 14.sp),
+                        ),
+                      ),
+
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Buddha',
+                          style: TextStyle(color: Colors.brown),
+                        ),
+                      ),
+
+                      SizedBox(height: 10.h),
+                      Row(
+                        children: [
+                          Image.asset(
+                            'assets/drawer_first.png',
+                            width: 100.w,     // Increased from 40 to 60
+                            height: 100.h,    // Optional: set height to match proportion
+                            fit: BoxFit.contain, // Ensures image stays within bounds
+                          ),
+
+                          Image.asset(
+                            'assets/drawer_second.png',
+                            width: 120.w,     // Increased from 40 to 60
+                            height: 120.h,    // Optional: set height to match proportion
+                            fit: BoxFit.contain, // Ensures image stays within bounds
+                          ),
+
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                _drawerItem(Icons.local_fire_department, 'Popular'),
+                _drawerItem(Icons.new_releases, 'Latest'),
+                _drawerItem(Icons.spa, 'Meditation'),
+                _drawerItem(Icons.book, 'Top Quotes'),
+                _drawerItem(Icons.note, 'Sacred Journals'),
+                ListTile(
+                  leading: Icon(Icons.logout, color: Colors.brown),
+                  title: Text('Log Out', style: TextStyle(color: Colors.brown)),
+                  onTap: () {
+                    // Handle logout
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+
+
+
     );
+
   }
+}
+Widget _drawerItem(IconData icon, String label) {
+  return ListTile(
+    leading: Icon(icon, color: Colors.brown),
+    title: Text(label, style: TextStyle(color: Colors.brown)),
+    onTap: () {
+      Get.back(); // close drawer
+      // Add navigation if needed
+    },
+  );
 }

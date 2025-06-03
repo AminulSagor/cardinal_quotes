@@ -1,17 +1,75 @@
 import 'package:get/get.dart';
+import 'journal_service.dart';
+import '../storage/token_storage.dart';
 
 class JournalController extends GetxController {
-  final journals = [
-    {"title": "My Story", "text": "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy", "color": 0xFFFFFFCC},
-    {"title": "My Story", "text": "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy", "color": 0xFFFFCCCC},
-    {"title": "My Story", "text": "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy", "color": 0xFFFFCCCC},
-    {
-      "title": "My Story",
-      "text":
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, When an unknown printer took a galley of type and scrambled it to make a type specimen book. it has survived not only five centuries,",
-      "color": 0xFFCCFFFF
-    },
-    {"title": "My Story", "text": "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy", "color": 0xFF9999FF},
-    {"title": "My Story", "text": "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy", "color": 0xFFFFF0CC},
-  ].obs;
+  final journals = <Map<String, dynamic>>[].obs;
+  final filteredJournals = <Map<String, dynamic>>[].obs;
+  final isLoading = false.obs;
+  final isSearchVisible = false.obs;
+  final searchText = ''.obs;
+
+  final _colors = [
+    0xFFCCFFFF,
+    0xFFFFFFCC,
+    0xFFFFCCFF,
+    0xFF000000,
+    0xFFCCFFFF,
+  ];
+
+  List<Map<String, dynamic>> _allJournals = [];
+
+  @override
+  void onReady() {
+    super.onReady();
+    loadJournals();
+  }
+
+  Future<void> loadJournals() async {
+    isLoading.value = true;
+
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      journals.clear();
+      filteredJournals.clear();
+      isLoading.value = false;
+      return;
+    }
+
+    final data = await JournalService().fetchJournals(token);
+
+    final withColors = data.asMap().entries.map((entry) {
+      final index = entry.key;
+      final note = entry.value;
+      return {
+        "id": note["id"],
+        "title": note["title"] ?? "Untitled",
+        "text": note["note"] ?? "",
+        "color": _colors[index % _colors.length],
+      };
+    }).toList();
+
+    _allJournals = withColors;
+    journals.assignAll(withColors);
+    filteredJournals.assignAll(withColors);
+    isLoading.value = false;
+  }
+
+  void toggleSearch() {
+    isSearchVisible.value = !isSearchVisible.value;
+    if (!isSearchVisible.value) {
+      search('');
+    }
+  }
+
+  void search(String text) {
+    searchText.value = text;
+    final query = text.toLowerCase();
+    final filtered = _allJournals.where((j) {
+      final title = (j['title'] ?? '').toString().toLowerCase();
+      final note = (j['text'] ?? '').toString().toLowerCase();
+      return title.contains(query) || note.contains(query);
+    }).toList();
+    filteredJournals.assignAll(filtered);
+  }
 }

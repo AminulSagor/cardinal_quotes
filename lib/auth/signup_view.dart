@@ -9,129 +9,172 @@ class SignupView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFBC2A0D),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              children: [
-                SizedBox(height: 20.h),
-                Transform.scale(
-                  scale: 1.49,
-                  child: Image.asset(
-                    'assets/top_signup_login_bird.png',
-                    width: 250.w,
-                  ),
+      backgroundColor: const Color(0xFFFDF1DC),
+      body: Stack(
+        children: [
+          // Bottom image
+          Obx(() => Transform.translate(
+            offset: controller.isLogin.value
+                ? Offset(0, -12.h)
+                : Offset(0, -7.h),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Transform.scale(
+                scale: 1.1,
+                child: Image.asset(
+                  'assets/signup_bottom.png',
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
                 ),
+              ),
+            ),
+          )),
 
-                Obx(() => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => controller.isLogin.value = false,
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: controller.isLogin.value ? Colors.transparent : Colors.white,
-                        foregroundColor: controller.isLogin.value ? Colors.white : Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        side: BorderSide(color: Colors.white),
+          // Scrollable form content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                children: [
+                  SizedBox(height: 10.h),
+                  Transform.translate(
+                    offset: Offset(110.w, -5.h),
+                    child: Transform.scale(
+                      scale: 1.1,
+                      child: Image.asset(
+                        'assets/signup_bird.png',
+                        width: 150.w,
                       ),
-                      child: Text("Sign Up"),
                     ),
-                    SizedBox(width: 12.w),
-                    OutlinedButton(
-                      onPressed: () => controller.isLogin.value = true,
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: controller.isLogin.value ? Colors.white : Colors.transparent,
-                        foregroundColor: controller.isLogin.value ? Colors.black : Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        side: BorderSide(color: Colors.white),
-                      ),
-                      child: Text("Log In"),
-                    ),
-                  ],
-                )),
-
-                SizedBox(height: 20.h),
-
-                // Fields
-                Obx(() {
-                  return Column(
+                  ),
+                  SizedBox(height: controller.isLogin.value ? 30.h : 1.h),
+                  Obx(() => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (!controller.isLogin.value)
-                        _buildTextField(
-                          hint: "Enter your username",
-                          onChanged: (val) => controller.name.value = val,
-                        ),
-                      _buildTextField(
-                        hint: "Enter your email address",
-                        onChanged: (val) => controller.email.value = val,
-                      ),
-                      Obx(() => _buildTextField(
-                        hint: controller.isLogin.value ? "Enter Password" : "Create A Password",
-                        obscure: !controller.isPasswordVisible.value,
-                        suffix: IconButton(
-                          icon: Icon(controller.isPasswordVisible.value
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: controller.togglePasswordVisibility,
-                        ),
-                        onChanged: (val) => controller.password.value = val,
-                      )),
-                      if (!controller.isLogin.value)
-                        Obx(() => _buildTextField(
-                          hint: "Confirm Password",
-                          obscure: !controller.isConfirmPasswordVisible.value,
-                          suffix: IconButton(
-                            icon: Icon(controller.isConfirmPasswordVisible.value
-                                ? Icons.visibility
-                                : Icons.visibility_off),
-                            onPressed: controller.toggleConfirmPasswordVisibility,
-                          ),
-                          onChanged: (val) => controller.confirmPassword.value = val,
-                        )),
+                      _buildTabButton("Sign Up", !controller.isLogin.value,
+                              () {
+                            controller.isLogin.value = false;
+                          }),
+                      SizedBox(width: 16.w),
+                      _buildTabButton("Log In", controller.isLogin.value,
+                              () {
+                            controller.isLogin.value = true;
+                          }),
                     ],
-                  );
-                }),
+                  )),
+                  SizedBox(height: 30.h),
+                  Obx(() {
+                    return Column(
+                      children: [
+                        if (!controller.isLogin.value)
+                          _buildTextField(
+                            hint: "Enter your username",
+                            onChanged: (val) => controller.name.value = val,
+                          ),
+                        _buildTextField(
+                          hint: "Enter your email address",
+                          onChanged: (val) => controller.email.value = val,
+                        ),
+                        Obx(() => _buildTextField(
+                          hint: controller.isLogin.value
+                              ? "Enter Password"
+                              : "Create A Password",
+                          obscure:
+                          !controller.isPasswordVisible.value,
+                          suffix: IconButton(
+                            icon: Icon(
+                                controller.isPasswordVisible.value
+                                    ? Icons.visibility
+                                    : Icons.visibility_off),
+                            onPressed:
+                            controller.togglePasswordVisibility,
+                          ),
+                          onChanged: (val) =>
+                          controller.password.value = val,
+                        )),
+                        if (!controller.isLogin.value)
+                          Obx(() => _buildTextField(
+                            hint: "Confirm Password",
+                            obscure: !controller
+                                .isConfirmPasswordVisible.value,
+                            suffix: IconButton(
+                              icon: Icon(controller
+                                  .isConfirmPasswordVisible.value
+                                  ? Icons.visibility
+                                  : Icons.visibility_off),
+                              onPressed: controller
+                                  .toggleConfirmPasswordVisibility,
+                            ),
+                            onChanged: (val) =>
+                            controller.confirmPassword.value = val,
+                          )),
+                      ],
+                    );
+                  }),
+                  SizedBox(height: 20.h),
+                  Obx(() {
+                    final bool isSignup = !controller.isLogin.value;
+                    final bool canProceed = controller.email.value.isNotEmpty &&
+                        controller.password.value.isNotEmpty &&
+                        (isSignup ? controller.confirmPassword.value.isNotEmpty : true);
 
-                SizedBox(height: 20.h),
+                    return ElevatedButton(
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : controller.isLogin.value
+                          ? controller.login
+                          : controller.signup,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canProceed
+                            ? const Color(0xFF844D38)
+                            : const Color(0xFFD7886B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 12.h),
+                      ),
+                      child: controller.isLoading.value
+                          ? SizedBox(
+                        width: 24.w,
+                        height: 24.h,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : Text(
+                        "Next",
+                        style: TextStyle(fontSize: 16.sp, color: Colors.white),
+                      ),
+                    );
+                  }),
 
-                // Submit Button
-                Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : controller.isLogin.value
-                      ? controller.login
-                      : controller.signup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD7886B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                  ),
-                  child: controller.isLoading.value
-                      ? SizedBox(
-                    width: 24.w,
-                    height: 24.h,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                      : Text("Next"),
-                )),
-
-                Obx(() => Transform.translate(
-                  offset: controller.isLogin.value ? Offset(0, 80.h) : Offset(0, 10.h),
-                  child: Transform.scale(
-                    scale: 1.3,
-                    child: Image.asset(
-                      'assets/bottom_signup_login_bird.png',
-                      width: 300.w,
-                    ),
-                  ),
-                )),
-
-              ],
+                  SizedBox(height: 120.h), // Add space so scroll doesn't cut
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildTabButton(
+      String label, bool isSelected, VoidCallback onPressed) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor:
+        isSelected ? const Color(0xFF844D38) : Colors.transparent,
+        foregroundColor:
+        isSelected ? Colors.white : const Color(0xFF844D38),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.r)),
+        side: BorderSide(color: const Color(0xFF844D38)),
+        padding:
+        EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 14.sp)),
     );
   }
 
@@ -151,9 +194,11 @@ class SignupView extends StatelessWidget {
           hintText: hint,
           filled: true,
           fillColor: Colors.white.withOpacity(0.6),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+          border:
+          OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
           suffixIcon: suffix,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          contentPadding:
+          EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         ),
       ),
     );

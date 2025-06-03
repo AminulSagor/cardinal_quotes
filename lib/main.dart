@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Poppins',
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           ),
-          initialRoute: AppRoutes.todo,
+          initialRoute: AppRoutes.home,
           routes: AppRoutes.routes,
         );
       },
