@@ -4,58 +4,72 @@ import 'package:get/get.dart';
 import 'save_controller.dart';
 
 class SaveView extends StatelessWidget {
-  final controller = Get.put(SaveController());
+  final String category;
+  final SaveController controller;
+
+  SaveView({super.key, required this.category})
+      : controller = Get.put(SaveController(category));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFAA4A2E),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 16.h),
-              Row(
-                children: [
-                  Icon(Icons.arrow_right_alt, color: Colors.white),
-                  SizedBox(width: 4.w),
-                  Text("Save", style: TextStyle(color: Colors.white, fontSize: 16.sp)),
-                ],
-              ),
-              SizedBox(height: 16.h),
-
-              // Tabs
-              Obx(() {
-                return Row(
+        child: Obx(() {
+          return controller.isLoading.value
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              : Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 16.h),
+                Row(
                   children: [
-                    _tabButton("Audios", 'audio'),
-                    SizedBox(width: 12.w),
-                    _tabButton("Quotes", 'quote'),
-                  ],
-                );
-              }),
-              SizedBox(height: 20.h),
+                    const Icon(Icons.arrow_right_alt, color: Colors.white),
+                    SizedBox(width: 4.w),
+                    Text(
+                      category.replaceAll('_', ' ').capitalizeFirst ?? 'Saved Items',
+                      style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                    ),
 
-              // Content
-              Obx(() {
-                return controller.selectedTab.value == 'audio'
-                    ? _buildAudio(controller.audios.first)
-                    : _buildQuote(controller.quotes.first);
-              }),
-            ],
-          ),
-        ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+
+                // Tab Bar
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Obx(() => Row(
+                    children: [
+
+                      _tab("Quotes", "quote", Icons.format_quote),
+                      _tab("Audios", "audio", Icons.music_note),
+                      _tab("Wallpapers", "wallpaper", Icons.wallpaper),
+                      _tab("Memorial Cards", "memorial", Icons.book),
+                    ],
+                  )),
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Tab Content
+                Expanded(child: Obx(() => _buildTabContent())),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
 
-  Widget _tabButton(String label, String key) {
+
+  Widget _tab(String title, String key, IconData icon) {
     final isSelected = controller.selectedTab.value == key;
     return GestureDetector(
-      onTap: () => controller.selectedTab.value = key,
+      onTap: () => controller.onTabChanged(key),
       child: Container(
+        margin: EdgeInsets.only(right: 12.w),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFFFF7EA) : Colors.transparent,
@@ -64,193 +78,67 @@ class SaveView extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(key == 'audio' ? Icons.music_note : Icons.format_quote,
-                color: isSelected ? Colors.brown : Colors.white,
-                size: 16.sp),
+            Icon(icon, size: 16.sp, color: isSelected ? Colors.brown : Colors.white),
             SizedBox(width: 6.w),
             Text(
-              label,
+              title,
               style: TextStyle(
-                color: isSelected ? Colors.brown : Colors.white,
                 fontSize: 12.sp,
+                color: isSelected ? Colors.brown : Colors.white,
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAudio(Map<String, dynamic> audio) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24.r),
-            image: DecorationImage(
-              image: AssetImage(audio["image"]),
-              fit: BoxFit.cover,
-            ),
+  Widget _buildTabContent() {
+    switch (controller.selectedTab.value) {
+      case 'audio':
+        return controller.audios.isEmpty
+            ? _emptyText()
+            : ListView.builder(
+          itemCount: controller.audios.length,
+          itemBuilder: (_, i) => controller.buildAudioCard(controller.audios[i], i),
+        );
+      case 'quote':
+        return controller.quotes.isEmpty
+            ? _emptyText()
+            : ListView.builder(
+          itemCount: controller.quotes.length,
+          itemBuilder: (_, i) => controller.buildQuoteCard(controller.quotes[i]),
+        );
+      case 'wallpaper':
+        return controller.wallpapers.isEmpty
+            ? _emptyText()
+            : GridView.builder(
+          itemCount: controller.wallpapers.length,
+          //padding: EdgeInsets.only(top: 10.h),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16.h,
+            crossAxisSpacing: 16.w,
+            childAspectRatio: 0.7,
           ),
-          padding: EdgeInsets.all(20.w),
-          child: Center(
-            child: Container(
-              width: 170.w,
-              height: 150.h,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border(
-                  top: BorderSide(color: const Color(0xFFFFF7EA), width: 8),
-                  right: BorderSide(color: const Color(0xFFFFF7EA), width: 12),
-                  bottom: BorderSide(color: const Color(0xFFFFF7EA), width: 60),
-                  left: BorderSide(color: const Color(0xFFFFF7EA), width: 12),
-                ),
-              ),
-              child:  Stack(
-                children: [
-                  // Waveform centered
-                  Align(
-                    alignment: Alignment.center,
-                    child: Transform.translate(
-                      offset: Offset(0, -2.h), // move up by 10 logical pixels
-                      child: Image.asset(
-                        'assets/wave.png',
-                        height: 50.h,
-                        color: const Color(0xFFFFF7EA),
-                      ),
-                    ),
-                  ),
+          itemBuilder: (_, i) => controller.buildImageCard(controller.wallpapers[i]),
+        );
+      case 'memorial':
+        return controller.memorials.isEmpty
+            ? _emptyText()
+            : ListView.builder(
+          itemCount: controller.memorials.length,
+          itemBuilder: (_, i) =>
+              controller.buildQuoteCard(controller.memorials[i]),
+        );
 
-                  // Bottom overlay
-                  Transform.translate(
-                    offset: Offset(0, 90.h),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Icon(Icons.play_arrow, size: 18.sp, color: Colors.brown),
-                            Text("10.00", style: TextStyle(fontSize: 12.sp, color: Colors.brown)),
-                          ],
-                        ),
-                        SizedBox(height: 6.h),
-                        Container(
-                          height: 2.h,
-                          color: Colors.brown,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Title below the line
-
-                  Transform.translate(
-                    offset: Offset(0, 85.h),
-                    child: Center(
-                      child: Text(
-                        "Wiper",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.brown,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        _tags(audio["tags"]),
-        _actionRow(),
-      ],
-    );
+      default:
+        return _emptyText();
+    }
   }
 
-
-  Widget _buildQuote(Map<String, dynamic> quote) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Image quote with text over it
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16.r),
-          child: Stack(
-            children: [
-              Image.asset(quote["background"], fit: BoxFit.cover, width: double.infinity),
-              Positioned.fill(
-                child: Center(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 24.w),
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          quote["text"],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14.sp, color: Colors.black, height: 1.4),
-                        ),
-                        SizedBox(height: 10.h),
-                        Text(
-                          quote["author"],
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 8.h),
-        _tags(quote["tags"]),
-        _actionRow(),
-      ],
-    );
-  }
-
-  Widget _tags(List<String> tags) {
-    return Wrap(
-      spacing: 10.w,
-      children: tags
-          .map((tag) => Text(tag, style: TextStyle(color: Colors.white, fontSize: 12.sp)))
-          .toList(),
-    );
-  }
-
-  Widget _actionRow() {
-    return Padding(
-      padding: EdgeInsets.only(top: 8.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _iconText(Icons.remove_red_eye, "567.57k"),
-          _iconText(Icons.share, "Share"),
-          _iconText(Icons.download, "Download"),
-          _iconText(Icons.bookmark, "Save"),
-        ],
-      ),
-    );
-  }
-
-  Widget _iconText(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white, size: 18.sp),
-        SizedBox(width: 4.w),
-        Text(label, style: TextStyle(color: Colors.white, fontSize: 12.sp)),
-      ],
-    );
-  }
+  Widget _emptyText() => Center(
+    child: Text('No items found.',
+        style: TextStyle(color: Colors.white, fontSize: 14.sp)),
+  );
 }

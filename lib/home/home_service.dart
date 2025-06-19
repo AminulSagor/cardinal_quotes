@@ -27,4 +27,32 @@ class HomeService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> getVisualsByCategory(String category) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/visuals/$category'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          final items = data['data'];
+          if (items is List) {
+            return List<Map<String, dynamic>>.from(items);
+          } else if (items is Map && items.containsKey('items')) {
+            return List<Map<String, dynamic>>.from(items['items']);
+          }
+        }
+      }
+      return [];
+    } catch (e) {
+      print('❌ getVisualsByCategory Error: $e');
+      return [];
+    }
+  }
+
+
+
+
+
 }

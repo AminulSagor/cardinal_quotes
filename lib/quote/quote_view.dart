@@ -2,6 +2,8 @@ import 'package:cardinal/sleep_sound/sleep_sound_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../ful_screen/quote_full_view.dart';
+import '../widgets/quote_card_widget.dart';
 import 'quote_controller.dart';
 import '../widgets/bottom_nav.dart';
 
@@ -26,7 +28,10 @@ class QuoteView extends StatelessWidget {
 
           if (controller.quotes.isEmpty) {
             return const Center(
-              child: Text('No quotes found.', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'No quotes found.',
+                style: TextStyle(color: Colors.white),
+              ),
             );
           }
 
@@ -45,34 +50,14 @@ class QuoteView extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
               ...controller.quotes.map((quote) {
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 24.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (quote['type'] == "image")
-                        _buildImageCard(quote)
-                      else if (quote['type'] == "visual")
-                        _buildVisualCard(quote)
-                      else
-                        _buildTextCard(quote),
-                      SizedBox(height: 8.h),
-                      Wrap(
-                        spacing: 12.w,
-                        children: List<Widget>.from(
-                          (quote['tags'] ?? []).map<Widget>(
-                                (tag) => Text(
-                              '#$tag',
-                              style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                            ),
-                          ),
-                        ),
-                      ),
-                      _quoteActions(quote),
-                    ],
-                  ),
+                return QuoteCardWidget(
+                  quote: quote,
+                  onSave: () => controller.saveQuote(quote['id']),
+                  onShare: () => print('Share quote ${quote['id']}'),
+                  onDownload: () => print('Download quote ${quote['id']}'),
                 );
-              }).toList(),
+              }),
+
             ],
           );
         }),
@@ -87,13 +72,19 @@ class QuoteView extends StatelessWidget {
         quote['background'] ?? '',
         width: double.infinity,
         fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) =>
-        progress == null ? child : const Center(child: CircularProgressIndicator()),
-        errorBuilder: (context, _, __) => Container(
-          height: 200.h,
-          color: Colors.black26,
-          child: const Center(child: Icon(Icons.broken_image, color: Colors.white)),
-        ),
+        loadingBuilder:
+            (context, child, progress) =>
+                progress == null
+                    ? child
+                    : const Center(child: CircularProgressIndicator()),
+        errorBuilder:
+            (context, _, __) => Container(
+              height: 200.h,
+              color: Colors.black26,
+              child: const Center(
+                child: Icon(Icons.broken_image, color: Colors.white),
+              ),
+            ),
       ),
     );
   }
@@ -109,13 +100,19 @@ class QuoteView extends StatelessWidget {
             width: double.infinity,
             fit: BoxFit.cover,
             height: 200.h,
-            loadingBuilder: (context, child, progress) =>
-            progress == null ? child : const Center(child: CircularProgressIndicator()),
-            errorBuilder: (context, _, __) => Container(
-              height: 200.h,
-              color: Colors.black26,
-              child: const Center(child: Icon(Icons.broken_image, color: Colors.white)),
-            ),
+            loadingBuilder:
+                (context, child, progress) =>
+                    progress == null
+                        ? child
+                        : const Center(child: CircularProgressIndicator()),
+            errorBuilder:
+                (context, _, __) => Container(
+                  height: 200.h,
+                  color: Colors.black26,
+                  child: const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white),
+                  ),
+                ),
           ),
           Padding(
             padding: EdgeInsets.all(8.w),
@@ -168,14 +165,18 @@ class QuoteView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _iconText(Icons.remove_red_eye, quote['views']?.toString() ?? '567.57k'),
+          _iconText(Icons.remove_red_eye, quote['views']?.toString() ?? '0'),
           _iconText(Icons.share, "Share"),
           _iconText(Icons.download, "Download"),
-          _iconText(Icons.bookmark_border, "Save"),
+          GestureDetector(
+            onTap: () => controller.saveQuote(quote['id']),
+            child: _iconText(Icons.bookmark_border, "Save"),
+          ),
         ],
       ),
     );
   }
+
 
   Widget _iconText(IconData icon, String label) {
     return Row(

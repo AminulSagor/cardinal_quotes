@@ -52,6 +52,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> login() async {
+
     isLoading.value = true;
     final response = await AuthService().login(
       email: email.value,

@@ -41,7 +41,11 @@ class AppRoutes {
       return QuoteView(category: category);
     },
 
-    save: (_) => SaveView(),
+    save: (_) {
+      final category = Get.arguments as String;
+      return SaveView(category: category);
+    },
+
     journal: (_) => JournalView(),
     noteWriting: (_) => NoteWritingView(),
     signup: (_) => SignupView(),

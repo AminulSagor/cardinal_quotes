@@ -20,6 +20,7 @@ class WallpaperService {
               'background': item['image_path'],
               'tags': item['keywords'] ?? [],
               'views': item['view_count'] ?? 0,
+              'id': item['id'],
             };
           }).toList();
         }

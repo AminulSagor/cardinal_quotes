@@ -29,9 +29,13 @@ class SleepSoundView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("Audio Name: ${audio['name']}");
+
     final controller = Get.put(SleepSoundController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.init(audio['audio_path']);
+      controller.init(audio['audio_path'], audio['name']);
+
+
     });
 
     return Scaffold(
@@ -84,6 +88,13 @@ class SleepSoundView extends StatelessWidget {
                       ),
                       SizedBox(height: 20.h),
                       Obx(() {
+                        if (controller.isBuffering.value) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
                         return Lottie.asset(
                           'assets/animation/music_wave.json',
                           width: 120.w,
@@ -92,6 +103,7 @@ class SleepSoundView extends StatelessWidget {
                           animate: controller.isPlaying.value,
                         );
                       }),
+
                       SizedBox(height: 10.h),
                     ],
                   ),
@@ -249,7 +261,7 @@ class SleepSoundView extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _iconText(Icons.remove_red_eye, "567.57k"),
+                  _iconText(Icons.remove_red_eye, "${audio['view_count'] ?? 0}"),
                   _iconText(Icons.share, "Share"),
                   _iconText(Icons.download, "Download"),
                   _iconText(Icons.bookmark_border, "Save"),

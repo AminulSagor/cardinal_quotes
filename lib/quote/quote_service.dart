@@ -14,7 +14,7 @@ class QuoteService {
 
     try {
       final res = await http.get(url);
-
+      print("📥 Response Body: ${res.body}");
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
         if (data['status'] == 'success') {
@@ -25,6 +25,7 @@ class QuoteService {
                 'background': item['image_path'],
                 'tags': item['keywords'] ?? [],
                 'views': item['view_count'] ?? 0,
+                'id': item['id'],
               };
             } else {
               final isText = item['is_text'] == 1;
@@ -34,6 +35,7 @@ class QuoteService {
                 'background': isText ? null : item['quote'],
                 'tags': item['keywords'] ?? [],
                 'views': item['view_count'] ?? 0,
+                'id': item['id'],
               };
             }
           }).toList();

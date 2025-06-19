@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class BottomNavBar extends StatelessWidget {
+import '../home/home_view.dart';
+import '../sound/sound_list_view.dart';
+import '../soul_checking/soul_checking_view.dart';
+import '../quote/quote_view.dart';
+import '../save/save_view.dart';
+
+class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
+
+  @override
+  State<BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    Widget destination = HomeView(); // default
+
+    switch (index) {
+      case 0:
+        destination = HomeView();
+        break;
+      case 1:
+        destination = SoundListView(category: 'cardinal_sounds');
+        break;
+      case 2:
+        destination = SoulCheckingView();
+        break;
+      case 3:
+        destination = QuoteView(category: 'top_quotes');
+        break;
+      case 4:
+        //destination = SaveView(category: 'saved');
+        break;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => destination),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +61,8 @@ class BottomNavBar extends StatelessWidget {
         ),
       ),
       child: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         backgroundColor: Colors.transparent,
         elevation: 0,
         type: BottomNavigationBarType.fixed,

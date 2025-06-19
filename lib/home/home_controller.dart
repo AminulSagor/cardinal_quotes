@@ -5,12 +5,14 @@ class HomeController extends GetxController {
   final RxList<String> wallpapers = <String>[].obs;
   final RxList<Map<String, dynamic>> quotes = <Map<String, dynamic>>[].obs;
   final RxList<String> memorialCards = <String>[].obs;
-  final RxList<String> announcements = <String>[].obs;
+  final RxList<Map<String, dynamic>> announcements = <Map<String, dynamic>>[].obs;
+
 
   @override
   void onInit() {
     super.onInit();
     loadInitialData();
+    loadAnnouncements();
   }
 
   void loadInitialData() async {
@@ -26,11 +28,19 @@ class HomeController extends GetxController {
       visualList.where((e) => e['category'] == 'memorial_card').map<String>((e) => e['image_path']).toList(),
     );
 
-    announcements.assignAll(
-      visualList.where((e) => e['category'] == 'announcement').map<String>((e) => e['image_path']).toList(),
-    );
+
+
 
     quotes.assignAll(quoteList);
+
   }
+
+  void loadAnnouncements() async {
+    final data = await HomeService.getVisualsByCategory('announcement');
+    print('📢 Announcements: $data');
+    announcements.assignAll(data);
+  }
+
+
 
 }

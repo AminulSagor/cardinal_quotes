@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'todo_controller.dart';
 
 class TodoView extends StatelessWidget {
   final controller = Get.put(TodoController());
+  final textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +15,8 @@ class TodoView extends StatelessWidget {
       body: Stack(
         children: [
           Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.fromLTRB(16.w, 16.w, 16.w, 0),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -28,33 +31,40 @@ class TodoView extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 8.h),
 
                 // Todo List
                 Obx(
-                  () => Column(
-                    children:
-                        controller.todos
+                      () => Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: controller.todos
                             .asMap()
                             .entries
-                            .map(
-                              (entry) => _buildTodoTile(entry.key, entry.value),
-                            )
+                            .map((entry) => _buildTodoTile(entry.key, entry.value))
                             .toList(),
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
+                //SizedBox(height: 100.h), // for spacing above the bird image
+
 
                 // Bird Image
-                Transform.translate(
-                  offset: Offset(0, 15.h), // Move up by 10 logical pixels (adjust as needed)
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Image.asset('assets/two_bird.png', height: 180.h),
-                  ),
-                ),
+
 
               ],
+            ),
+            // Bird Image - ✅ Correct place
+
+
+          ),
+          Positioned(
+            bottom: 15,
+            left: 0,
+            child: Transform.translate(
+              offset: Offset(0, 15.h),
+              child: Image.asset('assets/two_bird.png', height: 180.h),
             ),
           ),
 
@@ -91,7 +101,6 @@ class TodoView extends StatelessWidget {
             return SizedBox.shrink();
           }),
 
-
           // Bottom Input
           Obx(() {
             if (!controller.showInput.value) return SizedBox.shrink();
@@ -105,59 +114,222 @@ class TodoView extends StatelessWidget {
                     top: Radius.circular(24.r),
                   ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => controller.showInput.value = false,
-                          child: Text(
-                            "Cancel",
-                            style: TextStyle(color: Colors.brown),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          "New To-dos",
-                          style: TextStyle(
-                            color: const Color(0xFF591A0E),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: controller.addTodo,
-                          child: Text(
-                            "Save",
-                            style: TextStyle(color: const Color(0xFF591A0E),fontWeight: FontWeight.bold
+                child: Obx(() {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => controller.showInput.value = false,
+                            child: Text(
+                              "Cancel",
+                              style: TextStyle(
+                                color: const Color(0xFF591A0E),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF591A0E),
-                        borderRadius: BorderRadius.circular(24.r),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black26, blurRadius: 4),
+                          Spacer(),
+                          Text(
+                            "New To-dos",
+                            style: TextStyle(
+                              color: const Color(0xFF591A0E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Spacer(),
+                          GestureDetector(
+                            onTap: () async {
+                              final error = await controller.addTodo();
+                              if (error != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(error)),
+                                );
+                              } else {
+                                textController.clear(); // ✅ Clear the input
+                                controller.newTodo.value = ''; // Also reset the observable
+                                controller.showInput.value = false; // Optional: close input panel
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("To-do saved successfully."),
+                                  ),
+                                );
+                              }
+                            },
+
+
+                            child: Text(
+                              "Save",
+                              style: TextStyle(
+                                color: const Color(0xFF591A0E),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: TextField(
-                        onChanged: (value) => controller.newTodo.value = value,
-                        style: TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
-                          hintText: 'New To-dos',
-                          hintStyle: TextStyle(color: Colors.white54),
-                          border: InputBorder.none,
+
+                      SizedBox(height: 12.h),
+
+                      // Step 1: Text input
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF591A0E),
+                          borderRadius: BorderRadius.circular(24.r),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black26, blurRadius: 4),
+                          ],
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: TextField(
+                          controller: textController,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(30),
+                          ],
+                          onChanged: (value) {
+                            controller.newTodo.value = value;
+                            if (value.length == 30) {
+                              Get.snackbar(
+                                "Limit Reached",
+                                "Maximum 30 characters allowed.",
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.red.shade100,
+                                colorText: Colors.black,
+                                duration: Duration(seconds: 2),
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                              );
+                            }
+                          },
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(
+                            hintText: 'New To-dos',
+                            hintStyle: TextStyle(color: Colors.white54),
+                            border: InputBorder.none,
+                            counterText: '',
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+
+                      SizedBox(height: 12.h),
+
+                      // Step 2: Ask repeat or one-time
+                      if (controller.newTodo.value.isNotEmpty)
+                        Column(
+                          children: [
+                            Text(
+                              "Is it repetitive?",
+                              style: TextStyle(color: Colors.brown),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ChoiceChip(
+                                  label: Text("Yes"),
+                                  selected: controller.isRepeat.value,
+                                  onSelected:
+                                      (_) => controller.isRepeat.value = true,
+                                ),
+                                SizedBox(width: 8),
+                                ChoiceChip(
+                                  label: Text("No"),
+                                  selected: !controller.isRepeat.value,
+                                  onSelected:
+                                      (_) => controller.isRepeat.value = false,
+                                ),
+                              ],
+                            ),
+                            if (controller.isRepeat.value) ...[
+                              TextButton(
+                                onPressed: () => controller.selectAllDays(),
+                                child: const Text("Select All Days"),
+                              ),
+                              Wrap(
+                                spacing: 6.w,
+                                runSpacing: 6.h,
+                                children: [
+                                  'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+                                ].map((day) => Obx(() {
+                                  final isSelected = controller.selectedDays.contains(day);
+                                  return ChoiceChip(
+                                    label: Text(day),
+                                    selected: isSelected,
+                                    selectedColor: Colors.brown,
+                                    backgroundColor: Colors.grey.shade200,
+                                    labelStyle: TextStyle(
+                                      color: isSelected ? Colors.white : Colors.black,
+                                    ),
+                                    onSelected: (_) => controller.toggleDay(day),
+                                  );
+                                })).toList(),
+                              ),
+                            ],
+
+
+                            // Step 3: Time picker
+                            TextButton(
+                              onPressed: () async {
+                                if (!controller.isRepeat.value) {
+                                  final pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (pickedDate != null) {
+                                    controller.selectedDate.value = pickedDate;
+                                  }
+                                }
+
+                                final pickedTime = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                );
+                                if (pickedTime != null) {
+                                  controller.selectedTime.value = pickedTime
+                                      .format(context);
+                                }
+                              },
+                              child: Obx(() {
+                                final hasTime =
+                                    controller.selectedTime.value.isNotEmpty;
+                                final hasDate =
+                                    controller.selectedDate.value != null;
+                                final isRepeat = controller.isRepeat.value;
+
+                                String buttonText;
+
+                                if (isRepeat) {
+                                  buttonText =
+                                      hasTime
+                                          ? "Time: ${controller.selectedTime.value}"
+                                          : "Pick Time";
+                                } else {
+                                  if (!hasDate && !hasTime) {
+                                    buttonText = "Pick Time & Date";
+                                  } else {
+                                    buttonText = [
+                                      if (hasDate)
+                                        "Date: ${controller.formatDate(controller.selectedDate.value!)}",
+                                      if (hasTime)
+                                        "Time: ${controller.selectedTime.value}",
+                                    ].join(" | ");
+                                  }
+                                }
+
+                                return Text(buttonText);
+                              }),
+                            ),
+
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                    ],
+                  );
+                }),
               ),
             );
           }),
@@ -168,43 +340,51 @@ class TodoView extends StatelessWidget {
 
   Widget _buildTodoTile(int index, Map<String, dynamic> todo) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7EA),
         borderRadius: BorderRadius.circular(24.r),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: () => controller.toggleTodo(index),
-            child: Icon(
-              todo['checked']
-                  ? Icons.check_circle
-                  : Icons.radio_button_unchecked,
-              color: todo['checked'] ? Colors.brown : Colors.grey,
-              size: 20.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              todo['title'],
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: todo['checked'] ? Colors.brown : Colors.black,
-              ),
-            ),
-          ),
           Text(
-            todo['time'],
+            todo['title'],
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: todo['overdue'] ? Colors.red : Colors.black54,
-              fontSize: 12.sp,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: todo['checked'] ? Colors.brown : Colors.black,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 6.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if ((todo['days'] ?? '').isNotEmpty)
+                Text(
+                  todo['days'],
+                  style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                ),
+              if ((todo['days'] ?? '').isNotEmpty &&
+                  todo['time'].toString().isNotEmpty)
+                Text("  |  ", style: TextStyle(color: Colors.grey)),
+              if ((todo['time'] ?? '').isNotEmpty)
+                Text(
+                  todo['time'],
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: todo['overdue'] ? Colors.red : Colors.black45,
+                  ),
+                ),
+            ],
           ),
         ],
       ),
+
     );
   }
 }

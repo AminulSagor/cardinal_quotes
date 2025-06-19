@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../ful_screen/wallpaper_full_view.dart';
+import '../widgets/wallpaper_card_widget.dart';
 import 'wallpaper_controller.dart';
 import '../widgets/bottom_nav.dart';
 
 class WallpaperView extends StatelessWidget {
   final String category;
+
+
   final controller = Get.put(WallpaperController());
 
   WallpaperView({super.key, required this.category}) {
     controller.loadWallpapers(category);
   }
+
+
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +36,10 @@ class WallpaperView extends StatelessWidget {
 
           if (controller.wallpapers.isEmpty) {
             return const Center(
-              child: Text('No wallpapers found.', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'No wallpapers found.',
+                style: TextStyle(color: Colors.white),
+              ),
             );
           }
 
@@ -40,75 +54,35 @@ class WallpaperView extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final wallpaper = controller.wallpapers[index];
-              final tags = (wallpaper['tags'] ?? []) as List;
-              final viewCount = wallpaper['views'] ?? 0;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 4.w,
-                          runSpacing: 0,
-                          children: tags.isNotEmpty
-                              ? tags.take(2).map((tag) => Text(
-                            '#$tag',
-                            style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                            overflow: TextOverflow.ellipsis,
-                          )).toList()
-                              : [Text('#Wallpaper', style: TextStyle(color: Colors.white, fontSize: 12.sp))],
-                        ),
-                      ),
-
-                      PopupMenuButton<String>(
-                        color: Colors.orange.shade50,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-                        onSelected: (value) {
-                          // Handle popup actions
-                        },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                          PopupMenuItem<String>(
-                            value: 'views',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.remove_red_eye, size: 18, color: Colors.brown),
-                                SizedBox(width: 6.w),
-                                Text('$viewCount', style: const TextStyle(color: Colors.brown)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          _popupItem(Icons.bookmark_border, "Save"),
-                          _popupItem(Icons.share, "Share"),
-                          _popupItem(Icons.download, "Download"),
-                          _popupItem(Icons.wallpaper, "Set"),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 6.h),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20.r),
-                    child: Image.network(
-                      wallpaper['background'] ?? '',
-                      width: double.infinity,
-                      height: 180.h,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) =>
-                      progress == null ? child : const Center(child: CircularProgressIndicator()),
-                      errorBuilder: (context, _, __) => Container(
-                        height: 180.h,
-                        color: Colors.black26,
-                        child: const Center(child: Icon(Icons.broken_image, color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                ],
+              return WallpaperCard(
+                wallpaper: wallpaper,
+                onTap: () => Get.to(() => WallpaperFullView(wallpaper: wallpaper)),
+                onActionSelected: (value) {
+                  switch (value) {
+                    case 'save':
+                      controller.saveWallpaper(wallpaper['id']);
+                      break;
+                    case 'set_lock':
+                      controller.setWallpaper(wallpaper['background'], 'lock');
+                      break;
+                    case 'set_home':
+                      controller.setWallpaper(wallpaper['background'], 'home');
+                      break;
+                    case 'set_both':
+                      controller.setWallpaper(wallpaper['background'], 'both');
+                      break;
+                    case 'download':
+                      controller.downloadWallpaper(wallpaper['background']);
+                      break;
+                    case 'share':
+                    // Add share logic here
+                      break;
+                  }
+                },
               );
             },
+
           );
         }),
       ),

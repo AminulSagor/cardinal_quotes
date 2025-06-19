@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
+import '../combine_service/save_service.dart';
 import 'audio_service.dart';
 
 class SoundController extends GetxController {
@@ -11,6 +13,7 @@ class SoundController extends GetxController {
   final audioService = AudioService();
 
   SoundController(this.category);
+  final CombineSaveService saveService = CombineSaveService();
 
   @override
   void onInit() {
@@ -51,5 +54,26 @@ class SoundController extends GetxController {
     final minutes = twoDigits(d.inMinutes.remainder(60));
     final seconds = twoDigits(d.inSeconds.remainder(60));
     return "$minutes:$seconds";
+  }
+
+  Future<void> saveAudio(int id) async {
+    final success = await saveService.saveItem('audio', id);
+    if (success) {
+      Get.snackbar(
+        'Saved',
+        'Audio added to your saved list',
+        backgroundColor: Colors.white,
+        colorText: Colors.brown,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else {
+      Get.snackbar(
+        'Error',
+        'Failed to save audio',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }
